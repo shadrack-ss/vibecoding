@@ -70,8 +70,9 @@ export async function sendMessage(message, _history = []) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chatInput: message,   // n8n chatTrigger expects "chatInput"
-        sessionId,            // ties to Conversation Memory node
+        action: 'sendMessage', // required by n8n chatTrigger
+        chatInput: message,    // n8n chatTrigger expects "chatInput"
+        sessionId,             // ties to Conversation Memory node
       }),
     });
 
