@@ -1,0 +1,162 @@
+{
+  "name": "Odd Shoes — Email Capture",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "oddshoes-email",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "node-email-webhook",
+      "name": "Email Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "oddshoes-email-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst email = (body.email || '').trim().toLowerCase();\nconst source = body.source || 'chatbot';\nconst timestamp = new Date().toISOString();\n\n// Basic email validation\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!email || !emailRegex.test(email)) {\n  throw new Error('Invalid email address: ' + email);\n}\n\nreturn [{\n  json: {\n    email,\n    source,\n    timestamp,\n    valid: true\n  }\n}];"
+      },
+      "id": "node-validate-email",
+      "name": "Validate Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email": "={{ $json.email }}",
+            "Source": "={{ $json.source }}",
+            "Timestamp": "={{ $json.timestamp }}"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credentials",
+          "name": "Google Sheets"
+        }
+      },
+      "id": "node-save-sheet",
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"message\": \"Email captured! We'll be in touch soon. God bless!\" }",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "node-email-respond-ok",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": false, \"message\": \"Invalid email address.\" }",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "node-email-respond-err",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [680, 500]
+    }
+  ],
+  "connections": {
+    "Email Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Email": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    { "name": "oddshoes" },
+    { "name": "email-capture" },
+    { "name": "leads" }
+  ],
+  "notes": "## Odd Shoes Email Capture\n\nCaptures emails from the chatbot and saves them to Google Sheets.\n\n### Setup\n1. Connect your Google Sheets credential\n2. Replace YOUR_GOOGLE_SHEET_ID_HERE with your actual sheet ID (from the URL)\n3. Make sure the sheet has a tab named 'Leads' with columns: Email, Source, Timestamp\n4. Activate the workflow\n5. Copy the webhook URL: [your-n8n-url]/webhook/oddshoes-email\n6. Paste it in the React app's .env as VITE_N8N_EMAIL_WEBHOOK\n\n### Optional Extensions\n- Add a Send Email node after Google Sheets to auto-notify the team\n- Add an Airtable node instead of / in addition to Google Sheets\n- Add a Slack notification node to alert the team in real-time"
+}

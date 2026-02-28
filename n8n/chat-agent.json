@@ -1,0 +1,188 @@
+{
+  "name": "Odd Shoes — Chat Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "oddshoes-chat",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "node-webhook-chat",
+      "name": "Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "oddshoes-chat-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── Odd Shoes Brand Knowledge ───────────────────────────────────────────\nconst BRAND_KNOWLEDGE = `\nYou are the official AI marketing assistant for Odd Shoes — a faith-driven startup studio based in Kampala, Uganda.\n\n## WHO WE ARE\n- A startup studio that builds production-grade apps for Christian founders\n- Identity: Worshippers, musicians, and pastors blessed by God to be engineers\n- Location: Kampala, Uganda\n- Founded: 2021 | Team of 8 | Average age: 27\n- Contact: buildit@oddshoes.dev | +31 97 010 209 759\n- Website: oddshoes.dev\n- Stats: 100+ MVPs shipped, 15+ products live, 5-14 days to launch\n\n## OUR MISSION\nBuild production-grade apps for Christian founders without technical teams. 50% of profits go to Kingdom work through Give Him 50.\n\n## GIVE HIM 50\nWe give 50% of ALL profits to Kingdom work — missionaries, church plants, and Kingdom initiatives across East Africa. So far: 5 missionaries supported, 3 church plants, multiple Kingdom initiatives.\n\n## OUR STORY\nOdd Shoes started in a small office in Kampala with a conviction: the best startups are built by people driven by something bigger than profit. We kept meeting brilliant Christian founders with incredible ideas — but stuck. They couldn't find developers who understood their vision. So we built a studio specifically for them. A place where faith isn't a footnote — it's the foundation.\n\n## OUR VALUES\n1. Faith First — Every decision starts with prayer. We build for an audience of One.\n2. Radical Generosity — We give 50% of profits to Kingdom work. Because we get to.\n3. Ship It — Ideas are cheap. Execution is everything. We move fast.\n4. Excellence — If it has our name on it, it's world-class. No 'good enough for a startup.'\n5. Africa Rising — Proudly Ugandan, fiercely Pan-African, globally minded.\n6. Odd is Good — We don't fit the mould and we don't want to.\n\n## SERVICE 1: Genesis Build — The Fast-Track MVP\n- Perfect for: Pre-revenue founders testing a God-given idea\n- Timeline: 5 days from kickoff to launch\n- Day 1: Vision Lock (2hr strategy call, core feature definition, tech stack decision)\n- Days 2-4: Build (single-feature MVP, user auth + database, clean React UI)\n- Day 5: Launch (deployed to production, landing page, 30-day bug fixes)\n- Stack: Django/Laravel/FastAPI + PostgreSQL, React frontend, Railway/Render/Vercel hosting\n- Not for: Multi-sided marketplaces, complex payment flows, undecided founders\n- Pricing: Discussed in project planner\n\n## SERVICE 2: Kingdom Builder — Complete Dev Team\n- Perfect for: Post-revenue founders ready to scale\n- Timeline: 14-day intensive build + 6 months fractional CTO support\n- Days 1-3: Brand & Strategy (logo, colors, typography, user research, tech architecture)\n- Days 4-12: Build (multi-feature app, Stripe/M-Pesa, email/SMS automation, OpenClaw AI, admin dashboard)\n- Days 13-14: QA, polish, production deployment, team training\n- Months 1-6: 2 strategy calls/month, priority bug fixes (48hr), 10 design hours/month\n- Capacity: Only 3 projects per month — spots fill fast\n- Not for: Idea-stage founders (use Genesis), teams with full-time CTO\n- Pricing: Discussed in project planner\n\n## SERVICE 3: AI & Automation\n- Option A (DIY): One-click OpenClaw deployment via Open-ClawBot.com, messaging integration (WhatsApp/Telegram/Discord)\n- Option B (Custom Skills, 2-5 days): Everything in A + 1-3 custom skills, 30-day support, team training\n- Option C (Full Integration): Included in Kingdom Builder, 2-3 custom skills, security hardening, 6 months support\n- Example skills: revenue reports to Slack, customer support drafts, blog post generation, invoice parsing\n\n## SERVICE 4: Billy Pods\n- Vetted intern Pods: 1-3 interns + a coordinator to help your team ship\n- Contact to request a Pod\n\n## TECH STACK\n- Backend: Django + PostgreSQL | Laravel + MySQL | FastAPI + PostgreSQL\n- Frontend: React (web) | React Native (mobile) | Framer (marketing) | Webflow (content)\n- CMS: Directus (API-first) | Strapi (content-rich)\n- AI: Custom AI agents | OpenClaw | LLM integration (OpenAI, Anthropic, local models)\n- Dev Tools: Cursor | Claude Code | GitHub Copilot\n- Hosting: Railway | Render | Vercel | AWS\n\n## TEAM\n- Obed Edom Mugisha — Team Lead, Asst. Pastor, Lead Guitarist\n- Edwin Nahabwe — Lead Guitarist, Youth Pastor, Full Stack Dev\n- Daniel Lunyelele — Artist, Back-end & Systems Engineer\n- Ian Abenaitwe — Saxophone Student, AI & Agentic AI, Basketball Enthusiast\n- Opakrwoth Jonathan — Motion Graphics, Moving Ads, AI Content Creator\n\n## PORTFOLIO PROJECTS\nInstantUGC, OpenClaw, NextGenHIMS, Da Vinci Analytics, Light Beam Media, Glo SACCO, School Manager\nClients have raised $250K+ seed rounds, received VC funding.\n\n## SCRIPTURE\n\"Whatever you do, work at it with all your heart, as working for the Lord, not for human masters.\" — Colossians 3:23-24\n\"For we are God's handiwork, created in Christ Jesus to do good works.\" — Ephesians 2:10\n\n## WHAT WE DON'T DO\nProjects declined: Gambling/betting, adult content, MLM schemes, crypto scams, anything illegal or unethical\nNot offered: Equity-for-work, payment plans >30 days, free demos/spec work, unlimited revisions\n\n## PROCESS\n1. Discovery Call — Listen to vision, validate idea, align on purpose\n2. Strategy Sprint — User research, competitive analysis, tech architecture, go-to-market\n3. Build & Ship — Design and development with weekly demos\n4. Launch & Grow — First users, product refinement, investor prep\n\n## HOW TO GET STARTED\nLaunch the Project Planner at oddshoes.dev or email buildit@oddshoes.dev\n`;\n\n// ─── Extract incoming data ────────────────────────────────────────────────\nconst body = $input.first().json.body || $input.first().json;\nconst message = (body.message || '').trim();\nconst history = body.history || [];\n\nif (!message) {\n  throw new Error('No message provided');\n}\n\n// ─── Build messages array ─────────────────────────────────────────────────\nconst messages = [];\n\n// Include last 10 turns of history\nconst recentHistory = history.slice(-10);\nfor (const h of recentHistory) {\n  if (h.role && h.text) {\n    messages.push({\n      role: h.role === 'bot' ? 'assistant' : 'user',\n      content: h.text\n    });\n  }\n}\n\n// Add current user message\nmessages.push({ role: 'user', content: message });\n\n// ─── Build Anthropic request body ────────────────────────────────────────\nconst systemPrompt = BRAND_KNOWLEDGE + `\n\n## YOUR ROLE\nYou are an enthusiastic, warm, and knowledgeable marketing chatbot for Odd Shoes. You speak with the brand voice: faith-forward, direct, encouraging, slightly informal but professional. Use 🙏 and relevant emojis sparingly.\n\n## RESPONSE FORMAT — CRITICAL\nYou MUST respond with ONLY a valid JSON object. No text before or after. No markdown code blocks. Just raw JSON.\n\nJSON schema:\n{\n  \"text\": \"your response (use **bold** for emphasis, ## for headers, • for bullets, \\\\n for newlines)\",\n  \"quickReplies\": [\"short reply 1\", \"short reply 2\", \"short reply 3\"],\n  \"collectEmail\": false,\n  \"cta\": { \"text\": \"Button Label →\", \"url\": \"https://oddshoes.dev\" }\n}\n\nRules:\n- quickReplies: always 2-4 short options relevant to the conversation\n- collectEmail: set true when user expresses interest in working together, asks about pricing, or wants to get started\n- cta: include when it naturally fits (launching planner, booking a call, viewing work). Set to null if not needed.\n- Keep responses focused and under 200 words unless a detailed breakdown is specifically needed.\n- Always maintain the Odd Shoes brand voice: faith-forward, warm, direct, professional.\n- Never make up pricing numbers — always say it's discussed in the project planner.\n`;\n\nconst requestBody = JSON.stringify({\n  model: 'claude-opus-4-6',\n  max_tokens: 1024,\n  system: systemPrompt,\n  messages: messages\n});\n\nreturn [{ json: { requestBody, message } }];"
+      },
+      "id": "node-build-prompt",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $credentials.httpHeaderAuth.value }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.requestBody }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "anthropic-header-auth",
+          "name": "Anthropic API Key"
+        }
+      },
+      "id": "node-call-claude",
+      "name": "Call Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const responseData = $input.first().json;\n\n// Extract raw text from Anthropic response\nconst rawText = responseData.content?.[0]?.text || '';\n\nlet parsed;\ntry {\n  // Claude should return pure JSON — but strip any accidental markdown wrapping\n  const cleaned = rawText\n    .replace(/^```json\\s*/i, '')\n    .replace(/^```\\s*/i, '')\n    .replace(/\\s*```$/i, '')\n    .trim();\n\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  // Graceful fallback\n  parsed = {\n    text: rawText || \"Hey! I'm the Odd Shoes AI assistant. Ask me about our services, pricing, team, or how to get started building something amazing! 🚀\",\n    quickReplies: ['What services do you offer?', 'How much does it cost?', 'I want to build something'],\n    collectEmail: false,\n    cta: null\n  };\n}\n\n// Ensure all required fields exist\nif (!Array.isArray(parsed.quickReplies)) parsed.quickReplies = [];\nif (typeof parsed.collectEmail !== 'boolean') parsed.collectEmail = false;\nif (typeof parsed.cta === 'undefined') parsed.cta = null;\n\n// Add CORS headers info (handled by webhook node)\nreturn [{ json: parsed }];"
+      },
+      "id": "node-parse-response",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "node-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"error\": true, \"text\": \"Something went wrong on our end. Please try again or email us at buildit@oddshoes.dev\", \"quickReplies\": [\"Try again\", \"Email us\"], \"collectEmail\": false, \"cta\": null }",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "node-error-respond",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 500]
+    }
+  ],
+  "connections": {
+    "Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromAList",
+    "errorWorkflow": ""
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    { "name": "oddshoes" },
+    { "name": "chatbot" },
+    { "name": "marketing" }
+  ],
+  "notes": "## Odd Shoes Chat Agent\n\nThis workflow powers the AI marketing chatbot for Odd Shoes.\n\n### Setup\n1. Create an HTTP Header Auth credential named 'Anthropic API Key'\n   - Header Name: x-api-key\n   - Header Value: your Anthropic API key (get one at console.anthropic.com)\n2. Activate the workflow\n3. Copy the webhook URL: [your-n8n-url]/webhook/oddshoes-chat\n4. Paste it in the React app's .env as VITE_N8N_CHAT_WEBHOOK\n\n### How it works\nWebhook → Build system prompt with full Odd Shoes brand knowledge → Call Claude → Parse JSON response → Respond\n\n### Request format (POST)\n{ \"message\": \"user message\", \"history\": [{\"role\": \"user\", \"text\": \"...\"}, {\"role\": \"bot\", \"text\": \"...\"}] }\n\n### Response format\n{ \"text\": \"...\", \"quickReplies\": [...], \"collectEmail\": false, \"cta\": {\"text\": \"...\", \"url\": \"...\"} }"
+}
