@@ -5,10 +5,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/n8n': {
+      '/api/chat': {
         target: 'https://n8n.nrmcampaign.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/n8n/, ''),
+        rewrite: () => '/webhook/oddshoes-chat-trigger/chat',
       },
     },
   },
